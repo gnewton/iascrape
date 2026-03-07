@@ -121,6 +121,7 @@ func getUrlJSON(client *http.Client, url string, useCache bool, alternateKey str
 }
 
 func NewClient() *http.Client {
+
 	transport := &http.Transport{
 		DisableCompression:  false,
 		DisableKeepAlives:   false,
