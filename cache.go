@@ -19,8 +19,7 @@ type Cache struct {
 	db           *bolt.DB
 	filename     string
 	DBBucketName string
-	ttlSeconds   int64
-	keepForever  bool
+	KeepForever  bool
 }
 
 func (c *Cache) InitializeCache(dbFileName string) error {
@@ -30,9 +29,9 @@ func (c *Cache) InitializeCache(dbFileName string) error {
 	}
 
 	var err error
-	log.Println(c.keepForever)
+	log.Println(c.KeepForever)
 
-	if !c.keepForever {
+	if !c.KeepForever {
 		log.Println("Delewting cache db", dbFileName)
 		fileInfo, err := os.Stat(dbFileName)
 		if err != nil {
