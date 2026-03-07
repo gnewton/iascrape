@@ -120,13 +120,13 @@ func getUrlJSON(client *http.Client, url string, useCache bool, alternateKey str
 	return dec.Decode(items)
 }
 
-func newClient() *http.Client {
+func NewClient() *http.Client {
 	transport := &http.Transport{
-		MaxIdleConns:        10,               // Maximum idle connections
-		MaxIdleConnsPerHost: 10,               // Maximum idle connections per host
-		IdleConnTimeout:     90 * time.Second, // Idle connection timeout
-		DisableCompression:  false,            // Enable compression
-		DisableKeepAlives:   false,            // Enable keep-alives
+		DisableCompression:  false,
+		DisableKeepAlives:   false,
+		IdleConnTimeout:     90 * time.Second,
+		MaxIdleConns:        10,
+		MaxIdleConnsPerHost: 10,
 		// Dial: (&net.Dialer{
 		// 	Timeout:   30 * time.Second,
 		// 	KeepAlive: 30 * time.Second,
