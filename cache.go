@@ -25,7 +25,7 @@ type Cache struct {
 func (c *Cache) InitializeCache(dbFileName string) error {
 	log.Println("InitializeCache", dbFileName)
 	if c.db != nil {
-		log.Fatal("DB is not nil; only run initializeCache() once!")
+		return errors.New("DB is not nil; only run initializeCache() once!")
 	}
 
 	var err error
@@ -36,7 +36,7 @@ func (c *Cache) InitializeCache(dbFileName string) error {
 		fileInfo, err := os.Stat(dbFileName)
 		if err != nil {
 			if !errors.Is(err, os.ErrNotExist) {
-				log.Fatal(err)
+				return err
 			}
 		}
 		// Gives the modification time
@@ -68,7 +68,7 @@ func (c *Cache) InitializeCache(dbFileName string) error {
 
 }
 
-func (c *Cache) GetKey(url string) []byte {
+func (c *Cache) GetKey(url string) ([]byte, error) {
 
 	var v []byte
 
@@ -77,21 +77,21 @@ func (c *Cache) GetKey(url string) []byte {
 		v = b.Get([]byte(url))
 		return nil
 	}); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	if v != nil {
 		var buf bytes.Buffer
 		err := gunzipper2(&buf, v)
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
-		return buf.Bytes()
+		return buf.Bytes(), nil
 	} else {
 		log.Println("Cache miss")
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (c *Cache) AddToCache(url string, body []byte) error {
@@ -106,14 +106,15 @@ func (c *Cache) AddToCache(url string, body []byte) error {
 	})
 }
 
-func gzipper(w io.Writer, data []byte) {
+func gzipper(w io.Writer, data []byte) error {
 	gw := gzip.NewWriter(w)
 	defer gw.Close()
 
 	_, err := gw.Write(data)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
 func gunzipper(data []byte) error {

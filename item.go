@@ -1,8 +1,12 @@
 package iascrape
 
 import (
+	"errors"
 	"log"
 	"net/http"
+	"time"
+
+	"context"
 )
 
 // var ItemBaseUrl = "https://archive.org/metadata/"
@@ -59,18 +63,26 @@ type Role struct {
 	Performer     []string
 }
 
-func getItem(id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadata, error) {
+func GetItem(context context.Context, id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadata, time.Duration, error) {
+	if id == "" {
+		return nil, 0, errors.New("id cannot be empty string")
+	}
+
+	if client == nil {
+		return nil, 0, errors.New("client cannot be nil")
+	}
+
 	url := ItemBaseUrl + id
 	var item ItemTopLevelMetadata
 
-	err := getUrlJSON(client, url, true, id, &item, "", cache, 0)
+	ellapsed, err := getUrlJSON(context, client, url, id, &item, "", cache)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	fixItemStringFields(&item)
 
-	return &item, nil
+	return &item, ellapsed, nil
 }
 
 func fixItemStringFields(tm *ItemTopLevelMetadata) error {

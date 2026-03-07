@@ -1,6 +1,8 @@
 package iascrape
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -83,47 +85,51 @@ type SearchItem struct {
 }
 
 type Search struct {
-	query        string
+	Query        string
 	cursor       string
 	resultsCount int64
-	maxResults   int64
-	chunkSize    int
-	client       *http.Client
-	cache        *Cache
+	MaxResults   int64
+	ChunkSize    int
+	Client       *http.Client
 	done         bool
 	pause        time.Duration
 }
 
-func (s *Search) Total() (int64, error) {
-	url := IA_ScrapeBaseURL + s.query + "&total_only=true"
+func (s *Search) Total(ctx context.Context) (int64, time.Duration, error) {
+	if s.Query == "" {
+		return 0, 0, errors.New("Query cannot be empty string")
+	}
+
+	url := IA_ScrapeBaseURL + s.Query + "&total_only=true"
 
 	var results searchItems
-	err := getUrlJSON(s.client, url, true, "", &results, s.cursor, s.cache, 0)
+	var err error
+	var ellapsed time.Duration
+	ellapsed, err = getUrlJSON(ctx, s.Client, url, "", &results, s.cursor, nil)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
-
-	return results.Total, err
+	return results.Total, ellapsed, nil
 }
 
-func (s *Search) Execute() ([]SearchItem, error) {
+func (s *Search) Execute(context context.Context) ([]SearchItem, time.Duration, error) {
 
-	if s.maxResults < 100 {
-		return nil, fmt.Errorf("Requested num results must be > 100")
+	if s.MaxResults < 100 {
+		return nil, 0, fmt.Errorf("Requested num results must be > 100")
 	}
 
-	if s.chunkSize > 5000 {
-		return nil, fmt.Errorf("ChunkSize number of results requested exceeded")
+	if s.ChunkSize > 5000 {
+		return nil, 0, fmt.Errorf("ChunkSize number of results requested exceeded")
 	}
 
 	if s.done {
-		return nil, nil
+		return nil, 0, nil
 	}
 
-	thisQuery := s.query
+	thisQuery := s.Query
 
-	if s.chunkSize != 0 {
-		thisQuery = thisQuery + "&count=" + strconv.Itoa(s.chunkSize)
+	if s.ChunkSize != 0 {
+		thisQuery = thisQuery + "&count=" + strconv.Itoa(s.ChunkSize)
 	}
 
 	if s.cursor != "" {
@@ -135,24 +141,24 @@ func (s *Search) Execute() ([]SearchItem, error) {
 
 	log.Println("search", url)
 
-	err := getUrlJSON(s.client, url, true, "", &tmpItems, s.cursor, s.cache, s.pause)
+	ellapsed, err := getUrlJSON(context, s.Client, url, "", &tmpItems, s.cursor, nil)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if len(tmpItems.Items) == 0 {
-		return nil, nil
+		return nil, 0, nil
 	}
 
 	s.resultsCount = s.resultsCount + int64(len(tmpItems.Items))
 
-	if s.resultsCount >= s.maxResults {
+	if s.resultsCount >= s.MaxResults {
 		s.done = true
 	}
 
 	err = fixSearchItemStringFields(tmpItems.Items)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	s.cursor = tmpItems.Cursor
 
@@ -160,5 +166,5 @@ func (s *Search) Execute() ([]SearchItem, error) {
 		s.done = true
 	}
 
-	return tmpItems.Items, nil
+	return tmpItems.Items, ellapsed, nil
 }
