@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	//"net"
 	"context"
 	"net/http"
@@ -60,19 +61,27 @@ func NewClient() *http.Client {
 	}
 }
 
-func getUrlJSON(ctx context.Context, client *http.Client, url string, alternateKey string, items interface{}, cursor string, cache *Cache) error {
+func getUrlJSON(ctx context.Context, client *http.Client, url string, alternateKey string, results interface{}, cursor string, cache *Cache) error {
+	if ctx == nil {
+		return errors.New("Context is nil")
+	}
+
+	if url == "" {
+		return errors.New("URL is empty string")
+	}
 
 	log.Println("Getting ", url)
-	var body []byte
-	var err error
 
 	var key string
+	var err error
+
 	if alternateKey == "" {
 		key = url
 	} else {
 		key = alternateKey
 	}
 
+	var body []byte
 	if cache != nil {
 		body, err = cache.GetKey(key)
 		if err != nil {
@@ -94,15 +103,20 @@ func getUrlJSON(ctx context.Context, client *http.Client, url string, alternateK
 
 		dec := json.NewDecoder(bytes.NewBuffer(body))
 
-		return dec.Decode(items)
+		return dec.Decode(results)
 	}
 	return nil
 }
 
-func getUrl(ctx context.Context, client *http.Client, url string) ([]byte, error) {
+func getUrl(ctx context.Context, client *http.Client, urlString string) ([]byte, error) {
+	u, err := url.Parse(urlString)
+	if err != nil {
+		return nil, err
+	}
+
 	var res *http.Response
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		fmt.Printf("Error: Client fail: %s\n", err)
 		return nil, err
@@ -128,31 +142,6 @@ func getUrl(ctx context.Context, client *http.Client, url string) ([]byte, error
 		if err != nil {
 			return nil, err
 		}
-		// n++
-		// total += since
-		// if since < min {
-		// 	min = since
-		// }
-
-		// if since > max {
-		// 	max = since
-		// }
-
-		// log.Println(since, min, max, time.Duration(int64(total)/n))
-
-		// if since > time.Duration(int64(float64(int64(total))/float64(n)*3.0)) || since > 5*time.Second {
-		// 	// Backoff
-		// 	if backOff < 30*time.Second {
-		// 		backOff = backOff + time.Second + time.Second + time.Second + time.Second
-		// 	}
-		// 	log.Println(backOff, "getUrlJSON - BACKOFF $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-		// 	log.Println(backOff + time.Second + time.Second + time.Second)
-		// 	time.Sleep(backOff + time.Second + time.Second + time.Second)
-		// } else {
-		// 	if backOff > 0 {
-		// 		backOff = backOff - time.Second - time.Second
-		// 	}
-		// }
 
 		if res.StatusCode != 200 {
 			body, err := io.ReadAll(res.Body)
@@ -162,16 +151,14 @@ func getUrl(ctx context.Context, client *http.Client, url string) ([]byte, error
 				log.Println(string(body))
 				log.Println("--------------------------------------------------------------")
 			}
-			return nil, fmt.Errorf("Failing http code %d (!200)", res.StatusCode)
+			return nil, fmt.Errorf("Failing http status code %d (!200)", res.StatusCode)
 		}
 		if err != nil {
 			log.Println("Status code", res.StatusCode)
-			log.Println(url)
+			log.Println(u)
 			log.Println(err)
 			return nil, err
 		}
 	}
-
 	return io.ReadAll(res.Body)
-
 }

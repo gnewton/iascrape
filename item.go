@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+
 	//"time"
 
 	"context"
@@ -63,7 +64,10 @@ type Role struct {
 	Performer     []string
 }
 
-func GetItem(context context.Context, id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadata, error) {
+func GetItem(ctx context.Context, id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadata, error) {
+	if ctx == nil {
+		return nil, errors.New("Context is nil")
+	}
 	if id == "" {
 		return nil, errors.New("id cannot be empty string")
 	}
@@ -73,9 +77,9 @@ func GetItem(context context.Context, id string, client *http.Client, cache *Cac
 	}
 
 	url := ItemBaseUrl + id
-	var item ItemTopLevelMetadata
 
-	err := getUrlJSON(context, client, url, id, &item, "", cache)
+	var item ItemTopLevelMetadata
+	err := getUrlJSON(ctx, client, url, id, &item, "", cache)
 	if err != nil {
 		return nil, err
 	}

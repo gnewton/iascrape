@@ -93,6 +93,7 @@ type Search struct {
 	Client       *http.Client
 	done         bool
 	pause        time.Duration
+	Retries      int
 }
 
 func (s *Search) Total(ctx context.Context) (int64, error) {
