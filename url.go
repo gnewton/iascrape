@@ -60,7 +60,7 @@ func NewClient() *http.Client {
 	}
 }
 
-func getUrlJSON(ctx context.Context, client *http.Client, url string, alternateKey string, items interface{}, cursor string, cache *Cache) (time.Duration, error) {
+func getUrlJSON(ctx context.Context, client *http.Client, url string, alternateKey string, items interface{}, cursor string, cache *Cache) error {
 
 	log.Println("Getting ", url)
 	var body []byte
@@ -76,20 +76,17 @@ func getUrlJSON(ctx context.Context, client *http.Client, url string, alternateK
 	if cache != nil {
 		body, err = cache.GetKey(key)
 		if err != nil {
-			return 0, err
+			return err
 		}
 		log.Println("********* Cache hit")
 
 	}
 
-	var since time.Duration
 	if body == nil {
-		startTime := time.Now()
 		body, err := getUrl(ctx, client, url)
-		since = time.Since(startTime)
 
 		if err != nil {
-			return 0, err
+			return err
 		}
 		if cache != nil {
 			cache.AddToCache(key, body)
@@ -97,10 +94,9 @@ func getUrlJSON(ctx context.Context, client *http.Client, url string, alternateK
 
 		dec := json.NewDecoder(bytes.NewBuffer(body))
 
-		return since, dec.Decode(items)
+		return dec.Decode(items)
 	}
-	log.Println("DDDDDDDDDDDDDDDDDDDDDDDDD")
-	return 0, nil
+	return nil
 }
 
 func getUrl(ctx context.Context, client *http.Client, url string) ([]byte, error) {
@@ -127,14 +123,11 @@ func getUrl(ctx context.Context, client *http.Client, url string) ([]byte, error
 
 	select {
 	case <-ctx.Done():
-		log.Println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 		return nil, errors.New("Request timedout")
 	case <-ch:
-		log.Println("BBBBBBBBBBBBBBBBBBBBBBBBb")
 		if err != nil {
 			return nil, err
 		}
-		log.Println("CCCCCCCCCCCCCCCCCCCCCCCCCCc")
 		// n++
 		// total += since
 		// if since < min {

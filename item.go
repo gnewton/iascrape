@@ -4,7 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"time"
+	//"time"
 
 	"context"
 )
@@ -63,26 +63,26 @@ type Role struct {
 	Performer     []string
 }
 
-func GetItem(context context.Context, id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadata, time.Duration, error) {
+func GetItem(context context.Context, id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadata, error) {
 	if id == "" {
-		return nil, 0, errors.New("id cannot be empty string")
+		return nil, errors.New("id cannot be empty string")
 	}
 
 	if client == nil {
-		return nil, 0, errors.New("client cannot be nil")
+		return nil, errors.New("client cannot be nil")
 	}
 
 	url := ItemBaseUrl + id
 	var item ItemTopLevelMetadata
 
-	ellapsed, err := getUrlJSON(context, client, url, id, &item, "", cache)
+	err := getUrlJSON(context, client, url, id, &item, "", cache)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	fixItemStringFields(&item)
 
-	return &item, ellapsed, nil
+	return &item, nil
 }
 
 func fixItemStringFields(tm *ItemTopLevelMetadata) error {

@@ -95,35 +95,35 @@ type Search struct {
 	pause        time.Duration
 }
 
-func (s *Search) Total(ctx context.Context) (int64, time.Duration, error) {
+func (s *Search) Total(ctx context.Context) (int64, error) {
 	if s.Query == "" {
-		return 0, 0, errors.New("Query cannot be empty string")
+		return 0, errors.New("Query cannot be empty string")
 	}
 
 	url := IA_ScrapeBaseURL + s.Query + "&total_only=true"
 
 	var results searchItems
 	var err error
-	var ellapsed time.Duration
-	ellapsed, err = getUrlJSON(ctx, s.Client, url, "", &results, s.cursor, nil)
+
+	err = getUrlJSON(ctx, s.Client, url, "", &results, s.cursor, nil)
 	if err != nil {
-		return 0, 0, err
+		return 0, err
 	}
-	return results.Total, ellapsed, nil
+	return results.Total, nil
 }
 
-func (s *Search) Execute(context context.Context) ([]SearchItem, time.Duration, error) {
+func (s *Search) Execute(context context.Context) ([]SearchItem, error) {
 
 	if s.MaxResults < 100 {
-		return nil, 0, fmt.Errorf("Requested num results must be > 100")
+		return nil, fmt.Errorf("Requested num results must be > 100")
 	}
 
 	if s.ChunkSize > 5000 {
-		return nil, 0, fmt.Errorf("ChunkSize number of results requested exceeded")
+		return nil, fmt.Errorf("ChunkSize number of results requested exceeded")
 	}
 
 	if s.done {
-		return nil, 0, nil
+		return nil, nil
 	}
 
 	thisQuery := s.Query
@@ -141,13 +141,13 @@ func (s *Search) Execute(context context.Context) ([]SearchItem, time.Duration, 
 
 	log.Println("search", url)
 
-	ellapsed, err := getUrlJSON(context, s.Client, url, "", &tmpItems, s.cursor, nil)
+	err := getUrlJSON(context, s.Client, url, "", &tmpItems, s.cursor, nil)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	if len(tmpItems.Items) == 0 {
-		return nil, 0, nil
+		return nil, nil
 	}
 
 	s.resultsCount = s.resultsCount + int64(len(tmpItems.Items))
@@ -158,7 +158,7 @@ func (s *Search) Execute(context context.Context) ([]SearchItem, time.Duration, 
 
 	err = fixSearchItemStringFields(tmpItems.Items)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	s.cursor = tmpItems.Cursor
 
@@ -166,5 +166,5 @@ func (s *Search) Execute(context context.Context) ([]SearchItem, time.Duration, 
 		s.done = true
 	}
 
-	return tmpItems.Items, ellapsed, nil
+	return tmpItems.Items, nil
 }
