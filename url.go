@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/url"
 	//"net"
-	"context"
+	//"context"
 	"net/http"
 	"time"
 )
@@ -61,22 +61,20 @@ func NewClient() *http.Client {
 	}
 }
 
-func getUrlJSON(ctx context.Context, client *http.Client, url string, alternateKey string, results interface{}, cursor string, cache *Cache) error {
-	if ctx == nil {
-		return errors.New("Context is nil")
-	}
-
-	if url == "" {
+func getUrlJSON2(client *http.Client, urlString string, retry int, alternateKey string, results interface{}, cursor string, cache *Cache) error {
+	if urlString == "" {
 		return errors.New("URL is empty string")
 	}
 
-	log.Println("Getting ", url)
+	_, err := url.Parse(urlString)
+	if err != nil {
+		return err
+	}
 
 	var key string
-	var err error
 
 	if alternateKey == "" {
-		key = url
+		key = urlString
 	} else {
 		key = alternateKey
 	}
@@ -87,12 +85,10 @@ func getUrlJSON(ctx context.Context, client *http.Client, url string, alternateK
 		if err != nil {
 			return err
 		}
-		log.Println("********* Cache hit")
-
 	}
 
 	if body == nil {
-		body, err := getUrl(ctx, client, url)
+		body, err := getUrl2(client, urlString, retry, time.Second*5)
 
 		if err != nil {
 			return err
@@ -108,57 +104,43 @@ func getUrlJSON(ctx context.Context, client *http.Client, url string, alternateK
 	return nil
 }
 
-func getUrl(ctx context.Context, client *http.Client, urlString string) ([]byte, error) {
-	u, err := url.Parse(urlString)
-	if err != nil {
-		return nil, err
-	}
+func getUrl2(client *http.Client, u string, retry int, delay time.Duration) ([]byte, error) {
+	log.Println("Getting ", u)
+	var err error
 
-	var res *http.Response
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, u, nil)
 	if err != nil {
 		fmt.Printf("Error: Client fail: %s\n", err)
 		return nil, err
 	}
 
-	ch := make(chan struct{})
-	go func() {
-		log.Println("URL start")
-		res, err = client.Do(req)
-		log.Println("URL end")
-		ch <- struct{}{}
-	}()
+	res, err := client.Do(req)
 
 	if err != nil {
-		fmt.Printf("client: error making http request: %s\n", err)
-		return nil, err
+		if retry == 0 {
+			fmt.Printf("client: error making http request: %s\n", err)
+			return nil, err
+		} else {
+			log.Println("getUrl2: recurse", retry-1, delay*2, "   ==================================")
+			return getUrl2(client, u, retry-1, delay*2)
+		}
 	}
 
-	select {
-	case <-ctx.Done():
-		return nil, errors.New("Request timedout")
-	case <-ch:
-		if err != nil {
-			return nil, err
+	if res.StatusCode != 200 {
+		body, err := io.ReadAll(res.Body)
+		if err == nil {
+			log.Println("Error. Response body:")
+			log.Println("--------------------------------------------------------------")
+			log.Println(string(body))
+			log.Println("--------------------------------------------------------------")
 		}
-
-		if res.StatusCode != 200 {
-			body, err := io.ReadAll(res.Body)
-			if err == nil {
-				log.Println("Error. Response body:")
-				log.Println("--------------------------------------------------------------")
-				log.Println(string(body))
-				log.Println("--------------------------------------------------------------")
-			}
-			return nil, fmt.Errorf("Failing http status code %d (!200)", res.StatusCode)
-		}
-		if err != nil {
-			log.Println("Status code", res.StatusCode)
-			log.Println(u)
-			log.Println(err)
-			return nil, err
-		}
+		return nil, fmt.Errorf("Failing http status code %d (!200)", res.StatusCode)
+	}
+	if err != nil {
+		log.Println("Status code", res.StatusCode)
+		log.Println(u)
+		log.Println(err)
+		return nil, err
 	}
 	return io.ReadAll(res.Body)
 }

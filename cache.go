@@ -87,10 +87,7 @@ func (c *Cache) GetKey(url string) ([]byte, error) {
 			return nil, err
 		}
 		return buf.Bytes(), nil
-	} else {
-		log.Println("Cache miss")
 	}
-
 	return nil, nil
 }
 

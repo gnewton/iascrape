@@ -79,7 +79,8 @@ func GetItem(ctx context.Context, id string, client *http.Client, cache *Cache) 
 	url := ItemBaseUrl + id
 
 	var item ItemTopLevelMetadata
-	err := getUrlJSON(ctx, client, url, id, &item, "", cache)
+	//err := getUrlJSON(ctx, client, url, id, &item, "", cache)
+	err := getUrlJSON2(client, url, 6, id, &item, "", cache)
 	if err != nil {
 		return nil, err
 	}
