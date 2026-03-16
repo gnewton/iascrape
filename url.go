@@ -105,7 +105,7 @@ func getUrlJSON2(client *http.Client, urlString string, retry int, alternateKey 
 }
 
 func getUrl2(client *http.Client, u string, retry int, delay time.Duration) ([]byte, error) {
-	log.Println("Getting ", u)
+
 	var err error
 
 	req, err := http.NewRequest(http.MethodGet, u, nil)

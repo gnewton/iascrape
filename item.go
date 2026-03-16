@@ -47,7 +47,8 @@ type ItemMetadata struct {
 	Subject_Raw                 interface{} `json:"subject"`
 	Title                       []string
 	Title_Raw                   interface{} `json:"title"`
-	Uploader                    string      `json:"uploader"`
+	Uploader_Raw                interface{}      `json:"uploader"`
+	Uploader                    []string     
 	Year                        []string
 	Year_Raw                    interface{} `json:"year"`
 }
@@ -92,6 +93,7 @@ func GetItem(ctx context.Context, id string, client *http.Client, cache *Cache) 
 
 func fixItemStringFields(tm *ItemTopLevelMetadata) error {
 	sf := []StringFields{
+		{&tm.Metadata.Uploader, tm.Metadata.Uploader_Raw},
 		{&tm.Segments, tm.Segments_Raw},
 		{&tm.Metadata.Subject, tm.Metadata.Subject_Raw},
 		{&tm.Metadata.Creator, tm.Metadata.Creator_Raw},
