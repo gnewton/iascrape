@@ -1,7 +1,6 @@
 package iascrape
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -96,7 +95,7 @@ type Search struct {
 	Retries      int
 }
 
-func (s *Search) Total(ctx context.Context) (int64, error) {
+func (s *Search) Total() (int64, error) {
 	if s.Query == "" {
 		return 0, errors.New("Query cannot be empty string")
 	}
@@ -106,15 +105,14 @@ func (s *Search) Total(ctx context.Context) (int64, error) {
 	var results searchItems
 	var err error
 
-	//err = getUrlJSON(ctx, s.Client, url, "", &results, s.cursor, nil)
-	err = getUrlJSON2(s.Client, url, 5, "", &results, s.cursor, nil)
+	err = getUrlJSON(s.Client, url, 5, "", &results, s.cursor, nil)
 	if err != nil {
 		return 0, err
 	}
 	return results.Total, nil
 }
 
-func (s *Search) Execute(context context.Context) ([]SearchItem, error) {
+func (s *Search) Execute() ([]SearchItem, error) {
 
 	if s.MaxResults < 100 {
 		return nil, fmt.Errorf("Requested num results must be > 100")
@@ -143,7 +141,7 @@ func (s *Search) Execute(context context.Context) ([]SearchItem, error) {
 
 	log.Println("search", url)
 
-	err := getUrlJSON2(s.Client, url, 6, "", &tmpItems, s.cursor, nil)
+	err := getUrlJSON(s.Client, url, 6, "", &tmpItems, s.cursor, nil)
 	if err != nil {
 		return nil, err
 	}

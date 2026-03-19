@@ -52,6 +52,9 @@ func NewClient() *http.Client {
 		Timeout:   120 * time.Second,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			log.Println("VIA", len(via), via)
+			for i := 0; i < len(via); i++ {
+				log.Println(i, ".......", via[i].URL)
+			}
 			// Custom redirect handling
 			if len(via) >= 10 {
 				return errors.New("stopped after 10 redirects")
@@ -61,7 +64,7 @@ func NewClient() *http.Client {
 	}
 }
 
-func getUrlJSON2(client *http.Client, urlString string, retry int, alternateKey string, results interface{}, cursor string, cache *Cache) error {
+func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey string, results interface{}, cursor string, cache *Cache) error {
 	if urlString == "" {
 		return errors.New("URL is empty string")
 	}
@@ -88,7 +91,7 @@ func getUrlJSON2(client *http.Client, urlString string, retry int, alternateKey 
 	}
 
 	if body == nil {
-		body, err := getUrl2(client, urlString, retry, time.Second*5)
+		body, err = getUrl(client, urlString, retry, time.Second*5)
 
 		if err != nil {
 			return err
@@ -96,21 +99,20 @@ func getUrlJSON2(client *http.Client, urlString string, retry int, alternateKey 
 		if cache != nil {
 			cache.AddToCache(key, body)
 		}
-
-		dec := json.NewDecoder(bytes.NewBuffer(body))
-
-		return dec.Decode(results)
 	}
-	return nil
+
+	dec := json.NewDecoder(bytes.NewBuffer(body))
+
+	return dec.Decode(results)
 }
 
-func getUrl2(client *http.Client, u string, retry int, delay time.Duration) ([]byte, error) {
+func getUrl(client *http.Client, u string, retry int, delay time.Duration) ([]byte, error) {
 
 	var err error
 
 	req, err := http.NewRequest(http.MethodGet, u, nil)
 	if err != nil {
-		fmt.Printf("Error: Client fail: %s\n", err)
+		log.Printf("Error: Client fail: %s\n", err)
 		return nil, err
 	}
 
@@ -118,17 +120,18 @@ func getUrl2(client *http.Client, u string, retry int, delay time.Duration) ([]b
 
 	if err != nil {
 		if retry == 0 {
-			fmt.Printf("client: error making http request: %s\n", err)
+			log.Printf("client: error making http request: %s\n", err)
 			return nil, err
 		} else {
 			log.Println("getUrl2: recurse", retry-1, delay*2, "   ==================================")
-			return getUrl2(client, u, retry-1, delay*2)
+			return getUrl(client, u, retry-1, delay*2)
 		}
 	}
 
 	if res.StatusCode != 200 {
 		body, err := io.ReadAll(res.Body)
 		if err == nil {
+			log.Println("Error for url:", u)
 			log.Println("Error. Response body:")
 			log.Println("--------------------------------------------------------------")
 			log.Println(string(body))
@@ -143,4 +146,47 @@ func getUrl2(client *http.Client, u string, retry int, delay time.Duration) ([]b
 		return nil, err
 	}
 	return io.ReadAll(res.Body)
+}
+
+func HeadUrl(client *http.Client, u string, retry int, delay time.Duration) error {
+
+	var err error
+
+	req, err := http.NewRequest(http.MethodHead, u, nil)
+	if err != nil {
+		fmt.Printf("Error: Client fail: %s\n", err)
+		return err
+	}
+
+	res, err := client.Do(req)
+
+	if err != nil {
+		if retry == 0 {
+			log.Printf("client: error making http %s request: %s\n", u, err)
+			return err
+		} else {
+			log.Println("getUrl2: recurse", retry-1, delay*2, "   ==================================")
+			return HeadUrl(client, u, retry-1, delay*2)
+		}
+	}
+
+	log.Println("HeadURL", res.StatusCode, u)
+	if res.StatusCode != 200 {
+		body, err := io.ReadAll(res.Body)
+		if err == nil {
+			log.Println("Error for url:", u)
+			log.Println("Error. Response body:")
+			log.Println("--------------------------------------------------------------")
+			log.Println(string(body))
+			log.Println("--------------------------------------------------------------")
+		}
+		return fmt.Errorf("Failing http status code %d (!200)", res.StatusCode)
+	}
+	if err != nil {
+		log.Println("Status code", res.StatusCode)
+		log.Println(u)
+		log.Println(err)
+		return nil
+	}
+	return nil
 }
