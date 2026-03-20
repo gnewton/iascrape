@@ -8,7 +8,7 @@ import (
 	bolt "go.etcd.io/bbolt"
 	"io"
 	"io/ioutil"
-	"log"
+	//"log"
 	//"os"
 	//"time"
 )
@@ -22,7 +22,6 @@ type Cache struct {
 }
 
 func NewCache(dbFileName string) (*Cache, error) {
-	log.Println("InitializeCache", dbFileName)
 	c := new(Cache)
 	var err error
 

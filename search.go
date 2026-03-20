@@ -107,6 +107,7 @@ func (s *Search) Total() (int64, error) {
 
 	err = getUrlJSON(s.Client, url, 5, "", &results, s.cursor, nil)
 	if err != nil {
+		log.Println("Error on url", url)
 		return 0, err
 	}
 	return results.Total, nil
@@ -138,8 +139,6 @@ func (s *Search) Execute() ([]SearchItem, error) {
 
 	var tmpItems searchItems
 	url := IA_ScrapeBaseURL + thisQuery
-
-	log.Println("search", url)
 
 	err := getUrlJSON(s.Client, url, 6, "", &tmpItems, s.cursor, nil)
 	if err != nil {
