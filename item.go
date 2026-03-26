@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	//"time"
 )
@@ -73,6 +74,7 @@ type ItemMetadata struct {
 	Titles                  []string
 	Uploaders               []string
 	Years                   []string
+	CanonicalYear           string
 }
 
 type File struct {
@@ -121,6 +123,8 @@ func GetItem(id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadat
 
 	fixItemStringFields(&item)
 
+	item.Metadata.CanonicalYear = makeYear(item.Metadata.Years, item.Metadata.Dates)
+
 	return &item, nil
 }
 
@@ -148,7 +152,59 @@ func fixItemStringFields(tm *ItemTopLevelMetadata) error {
 		log.Println(err)
 		return err
 	}
+
 	return nil
+}
+
+func isInt(s string) bool {
+	if _, err := strconv.Atoi(s); err == nil {
+		return true
+	}
+	return false
+}
+
+func makeYear(years []string, dates []string) string {
+	year := ""
+	date := ""
+	if len(years) > 0 {
+		year = years[0]
+	}
+
+	if len(dates) > 0 {
+		date = dates[0]
+	}
+
+	if len(year) == 0 {
+		if len(date) == 0 {
+			return "????"
+		} else {
+			return yearFromString(date)
+		}
+	}
+	return yearFromString(year)
+
+}
+
+func yearFromString(s string) string {
+	// 1984
+
+	if len(s) == 4 && isInt(s) {
+		return s
+	}
+
+	// 1984-02
+	// 1984-02-09
+	if len(s) > 4 && isInt(s[0:4]) {
+		return s[0:4]
+	}
+
+	// 9/11/84
+	parts := strings.Split(s, "/")
+	if len(parts) == 3 {
+		return "19" + parts[2]
+	}
+
+	return "????-"
 }
 
 func fixKeywordField(md *ItemMetadata) {
