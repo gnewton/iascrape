@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 	//"time"
 )
 
@@ -29,17 +30,17 @@ type ItemTopLevelMetadata struct {
 }
 
 type ItemMetadata_Raw struct {
+	CollectionCatalogNumber_Raw interface{} `json:"collection-catalog-number"`
 	Collection_Raw              interface{} `json:"collection"`
-	Date_Raw                    interface{} `json:"date"`
 	Creator_Raw                 interface{} `json:"creator"`
+	Date_Raw                    interface{} `json:"date"`
 	Description_Raw             interface{} `json:"description"`
 	Genre_Raw                   interface{} `json:"genre"`
-	CollectionCatalogNumber_Raw interface{} `json:"collection-catalog-number"`
 	Language_Raw                interface{} `json:"language"`
 	Notes_Raw                   interface{} `json:"notes"`
+	PublisherCatalogNumber_Raw  interface{} `json:"publisher-catalog-number"`
 	Publisher_Raw               interface{} `json:"publisher"`
 	Scanner_Raw                 interface{} `json:"scanner"`
-	PublisherCatalogNumber_Raw  interface{} `json:"publisher-catalog-number"`
 	Subject_Raw                 interface{} `json:"subject"`
 	Title_Raw                   interface{} `json:"title"`
 	Uploader_Raw                interface{} `json:"uploader"`
@@ -49,40 +50,54 @@ type ItemMetadata_Raw struct {
 type ItemMetadata struct {
 	ItemMetadata_Raw
 	AddedDate               string `json:"addeddate"`
-	Collection              []string
-	CollectionCatalogNumber []string
+	Collections             []string
+	collectionCatalogNumber []string
 	Condition               string `json:"condition"`
 	Contributor             string `json:"contributor"`
-	Creator                 []string
-	Date                    []string
-	Description             []string
-	Genre                   []string
+	Creators                []string
+	Dates                   []string
+	Descriptions            []string
+	Genres                  []string
 	Identifier              string `json:"identifier"`
-	Keywords                string `json:"keywords"`
-	Language                []string
+	Keywords_CommaSeparated string `json:"keywords"`
+	Keywords                []string
+	Languages               []string
 	MediaType               string `json:"media_type"`
 	Notes                   []string
 	LicenseUrl              string `json:"licenseurl"`
 	PublicDate              string `json:"publicdate"`
-	Publisher               []string
-	PublisherCatalogNumber  []string
-	Scanner                 []string
-	Subject                 []string
-	Title                   []string
-	Uploader                []string
-	Year                    []string
+	Publishers              []string
+	PublisherCatalogNumbers []string
+	Scanners                []string
+	Subjects                []string
+	Titles                  []string
+	Uploaders               []string
+	Years                   []string
 }
 
 type File struct {
-	Name   string `json:"name"`
 	Format string `json:"format"`
-	Title  string `json:"title"`
+	MD5    string `json:"md5"`
+	Name   string `json:"name"`
 	Size   string `json:"size"`
+	Title  string `json:"title"`
 }
 
 type Role struct {
 	Performer_Raw interface{} `json:"performer"`
-	Performer     []string
+	Performers    []string
+}
+
+func MakeMetadataItemFieldMap(md *ItemMetadata) map[string]*[]string {
+	m := make(map[string]*[]string)
+
+	//m["collection"] = &md.Collection
+	m["creator"] = &md.Creators
+	m["genre"] = &md.Genres
+	m["keywords"] = &md.Keywords
+	m["language"] = &md.Languages
+	m["subject"] = &md.Subjects
+	return m
 }
 
 func GetItem(id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadata, error) {
@@ -100,6 +115,7 @@ func GetItem(id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadat
 
 	err := getUrlJSON(client, url, 6, id, &item, "", cache)
 	if err != nil {
+		log.Println("ID=", id)
 		return nil, err
 	}
 
@@ -109,20 +125,22 @@ func GetItem(id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadat
 }
 
 func fixItemStringFields(tm *ItemTopLevelMetadata) error {
+	fixKeywordField(&tm.Metadata)
+
 	sf := []StringFields{
-		{&tm.Metadata.Description, tm.Metadata.Description_Raw},
-		{&tm.Metadata.Uploader, tm.Metadata.Uploader_Raw},
+		//{&tm.Metadata.Collection, tm.Metadata.Collection_Raw},
+		{&tm.Metadata.collectionCatalogNumber, tm.Metadata.CollectionCatalogNumber_Raw},
+		{&tm.Metadata.Creators, tm.Metadata.Creator_Raw},
+		{&tm.Metadata.Dates, tm.Metadata.Date_Raw},
+		{&tm.Metadata.Descriptions, tm.Metadata.Description_Raw},
+		{&tm.Metadata.Languages, tm.Metadata.Language_Raw},
+		{&tm.Metadata.Scanners, tm.Metadata.Scanner_Raw},
+		{&tm.Metadata.Subjects, tm.Metadata.Subject_Raw},
+		{&tm.Metadata.Titles, tm.Metadata.Title_Raw},
+		{&tm.Metadata.Uploaders, tm.Metadata.Uploader_Raw},
+		{&tm.Metadata.Years, tm.Metadata.Year_Raw},
+		{&tm.Roles.Performers, tm.Roles.Performer_Raw},
 		{&tm.Segments, tm.Segments_Raw},
-		{&tm.Metadata.Subject, tm.Metadata.Subject_Raw},
-		{&tm.Metadata.Collection, tm.Metadata.Collection_Raw},
-		{&tm.Metadata.Creator, tm.Metadata.Creator_Raw},
-		{&tm.Metadata.Title, tm.Metadata.Title_Raw},
-		{&tm.Metadata.Year, tm.Metadata.Year_Raw},
-		{&tm.Metadata.Language, tm.Metadata.Language_Raw},
-		{&tm.Metadata.Scanner, tm.Metadata.Scanner_Raw},
-		{&tm.Metadata.Date, tm.Metadata.Date_Raw},
-		{&tm.Metadata.CollectionCatalogNumber, tm.Metadata.CollectionCatalogNumber_Raw},
-		{&tm.Roles.Performer, tm.Roles.Performer_Raw},
 	}
 
 	err := fixStrings(sf)
@@ -131,4 +149,20 @@ func fixItemStringFields(tm *ItemTopLevelMetadata) error {
 		return err
 	}
 	return nil
+}
+
+func fixKeywordField(md *ItemMetadata) {
+	md.Keywords = strings.Split(md.Keywords_CommaSeparated, ",")
+
+	for i := 0; i < len(md.Keywords); i++ {
+		md.Keywords[i] = strings.TrimSpace(md.Keywords[i])
+	}
+
+	// var tmp []string
+	// for i := 0; i < len(md.Subjects); i++ {
+	// 	z := md.Subjects[i]
+	// 	md.Subjects[i] = strings.TrimSpace(md.Subjects[i])
+	// }
+	// md.Subjects = strings.Split(md.Subjects_CommaSeparated, ",")
+
 }

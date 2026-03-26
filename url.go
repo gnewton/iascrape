@@ -103,7 +103,11 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 
 	dec := json.NewDecoder(bytes.NewBuffer(body))
 
-	return dec.Decode(results)
+	err = dec.Decode(results)
+	if err != nil {
+		log.Println(string(body))
+	}
+	return err
 }
 
 func getUrl(client *http.Client, u string, retry int, delay time.Duration) ([]byte, error) {

@@ -16,10 +16,6 @@ type StringFields struct {
 func fixSearchItemStringFields(items []SearchItem) error {
 	for i, _ := range items {
 		item := &(items[i])
-		//ints := []*[]int{&item.AvgRating}
-		//ints := []*[]int{&item.AvgRating}
-		//intsRaw := []*interface{}{&item.AvgRating_Raw}
-		//intsRaw = []*interface{}{&item.AvgRating_Raw}
 
 		sf := []StringFields{
 			{&item.Title, item.Title_Raw},
@@ -30,7 +26,6 @@ func fixSearchItemStringFields(items []SearchItem) error {
 			{&item.Date, item.Date_Raw},
 		}
 
-		//cleanInts(ints, intsRaw)
 		err := fixStrings(sf)
 		if err != nil {
 			log.Printf("------ %#v\n", item)
