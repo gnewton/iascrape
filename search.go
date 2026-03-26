@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Reference: https://journal.code4lib.org/articles/18510
 // Internet Archive Search api (scrape): https://archive.org/help/aboutsearch.htm
 var IA_ScrapeBaseURL = "https://archive.org/services/search/v1/scrape?"
 
@@ -84,15 +85,18 @@ type SearchItem struct {
 }
 
 type Search struct {
-	Query        string
-	cursor       string
-	resultsCount int64
-	MaxResults   int64
 	ChunkSize    int
 	Client       *http.Client
+	Limit        int64
+	MaxResults   int64
+	Offset       int64
+	Query        string
+	Retries      int
+	Verbose      bool
+	cursor       string
 	done         bool
 	pause        time.Duration
-	Retries      int
+	resultsCount int64
 }
 
 func (s *Search) Total() (int64, error) {
@@ -105,7 +109,7 @@ func (s *Search) Total() (int64, error) {
 	var results searchItems
 	var err error
 
-	err = getUrlJSON(s.Client, url, 5, "", &results, s.cursor, nil)
+	err = getUrlJSON(s.Client, url, 5, "", &results, s.cursor, nil, s.Verbose)
 	if err != nil {
 		log.Println("Error on url", url)
 		return 0, err
@@ -140,7 +144,7 @@ func (s *Search) Execute() ([]SearchItem, error) {
 	var tmpItems searchItems
 	url := IA_ScrapeBaseURL + thisQuery
 
-	err := getUrlJSON(s.Client, url, 6, "", &tmpItems, s.cursor, nil)
+	err := getUrlJSON(s.Client, url, 6, "", &tmpItems, s.cursor, nil, s.Verbose)
 	if err != nil {
 		return nil, err
 	}

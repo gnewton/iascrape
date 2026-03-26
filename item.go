@@ -23,11 +23,11 @@ type ItemTopLevelMetadata struct {
 	ItemSize         int64        `json:"item_size"`
 	Metadata         ItemMetadata `json:"metadata"`
 	Roles            Role         `json:"roles"`
-	Segments         []string
-	Segments_Raw     interface{} `json:"segments"`
-	Server           string      `json:"server"`
-	Workable_Servers []string    `json:"workable_servers"`
-	Uniq             int64       `json:"uniq"`
+	Segments         []string     `json:"-"`
+	Segments_Raw     interface{}  `json:"segments"`
+	Server           string       `json:"server"`
+	Workable_Servers []string     `json:"workable_servers"`
+	Uniq             int64        `json:"uniq"`
 }
 
 type ItemMetadata_Raw struct {
@@ -50,30 +50,30 @@ type ItemMetadata_Raw struct {
 
 type ItemMetadata struct {
 	ItemMetadata_Raw
-	AddedDate               string `json:"addeddate"`
-	Collections             []string
-	collectionCatalogNumber []string
-	Condition               string `json:"condition"`
-	Contributor             string `json:"contributor"`
-	Creators                []string
-	Dates                   []string
-	Descriptions            []string
-	Genres                  []string
-	Identifier              string `json:"identifier"`
-	Keywords_CommaSeparated string `json:"keywords"`
-	Keywords                []string
-	Languages               []string
-	MediaType               string `json:"media_type"`
-	Notes                   []string
-	LicenseUrl              string `json:"licenseurl"`
-	PublicDate              string `json:"publicdate"`
-	Publishers              []string
-	PublisherCatalogNumbers []string
-	Scanners                []string
-	Subjects                []string
-	Titles                  []string
-	Uploaders               []string
-	Years                   []string
+	AddedDate               string   `json:"addeddate"`
+	Collections             []string `json:"-"`
+	collectionCatalogNumber []string `json:"-"`
+	Condition               string   `json:"condition"`
+	Contributor             string   `json:"contributor"`
+	Creators                []string `json:"-"`
+	Dates                   []string `json:"-"`
+	Descriptions            []string `json:"-"`
+	Genres                  []string `json:"-"`
+	Identifier              string   `json:"identifier"`
+	Keywords_CommaSeparated string   `json:"keywords"`
+	Keywords                []string `json:"-"`
+	Languages               []string `json:"-"`
+	MediaType               string   `json:"media_type"`
+	Notes                   []string `json:"-"`
+	LicenseUrl              string   `json:"licenseurl"`
+	PublicDate              string   `json:"publicdate"`
+	Publishers              []string `json:"-"`
+	PublisherCatalogNumbers []string `json:"-"`
+	Scanners                []string `json:"-"`
+	Subjects                []string `json:"-"`
+	Titles                  []string `json:"-"`
+	Uploaders               []string `json:"-"`
+	Years                   []string `json:"-"`
 	CanonicalYear           string
 }
 
@@ -102,7 +102,7 @@ func MakeMetadataItemFieldMap(md *ItemMetadata) map[string]*[]string {
 	return m
 }
 
-func GetItem(id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadata, error) {
+func GetItem(id string, client *http.Client, cache *Cache, verbose bool) (*ItemTopLevelMetadata, error) {
 	if id == "" {
 		return nil, errors.New("id cannot be empty string")
 	}
@@ -115,7 +115,7 @@ func GetItem(id string, client *http.Client, cache *Cache) (*ItemTopLevelMetadat
 
 	var item ItemTopLevelMetadata
 
-	err := getUrlJSON(client, url, 6, id, &item, "", cache)
+	err := getUrlJSON(client, url, 6, id, &item, "", cache, verbose)
 	if err != nil {
 		log.Println("ID=", id)
 		return nil, err

@@ -25,28 +25,6 @@ func NewCache(dbFileName string) (*Cache, error) {
 	c := new(Cache)
 	var err error
 
-	// if !c.KeepForever {
-	// 	log.Println("Delewting cache db", dbFileName)
-	// 	fileInfo, err := os.Stat(dbFileName)
-	// 	if err != nil {
-	// 		if !errors.Is(err, os.ErrNotExist) {
-	// 			return err
-	// 		}
-	// 	}
-	// 	// Gives the modification time
-	// 	if fileInfo != nil {
-	// 		modificationTime := fileInfo.ModTime()
-	// 		if time.Since(modificationTime) > time.Hour {
-	// 			err = os.Remove(dbFileName)
-	// 			if err != nil {
-	// 				log.Println("Unable to delete file:", dbFileName)
-	// 				return err
-	// 			}
-	// 		}
-
-	// 	}
-	// }
-
 	c.db, err = bolt.Open(dbFileName, 0600, nil)
 	if err != nil {
 		return nil, err

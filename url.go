@@ -64,9 +64,13 @@ func NewClient() *http.Client {
 	}
 }
 
-func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey string, results interface{}, cursor string, cache *Cache) error {
+func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey string, results interface{}, cursor string, cache *Cache, verbose bool) error {
 	if urlString == "" {
 		return errors.New("URL is empty string")
+	}
+
+	if verbose {
+		log.Println("getUrlJSON: Getting URL", urlString)
 	}
 
 	_, err := url.Parse(urlString)
@@ -87,6 +91,9 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 		body, err = cache.GetKey(key)
 		if err != nil {
 			return err
+		}
+		if verbose && body != nil {
+			log.Println("Cache hit")
 		}
 	}
 
