@@ -144,6 +144,10 @@ func (s *Search) Execute() ([]SearchItem, error) {
 	var tmpItems searchItems
 	url := IA_ScrapeBaseURL + thisQuery
 
+	if s.Verbose {
+		log.Println("search.Executer: Query URL", url)
+	}
+
 	err := getUrlJSON(s.Client, url, 6, "", &tmpItems, s.cursor, nil, s.Verbose)
 	if err != nil {
 		return nil, err

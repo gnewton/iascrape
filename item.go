@@ -78,11 +78,13 @@ type ItemMetadata struct {
 }
 
 type File struct {
-	Format string `json:"format"`
-	MD5    string `json:"md5"`
-	Name   string `json:"name"`
-	Size   string `json:"size"`
-	Title  string `json:"title"`
+	Format       string      `json:"format"`
+	MD5          string      `json:"md5"`
+	Name         string      `json:"name"`
+	Size         string      `json:"size"`
+	Title        string      `json:"title"`
+	Original     []string    `json:"-"`
+	Original_Raw interface{} `json:"original"`
 }
 
 type Role struct {
@@ -99,10 +101,11 @@ func MakeMetadataItemFieldMap(md *ItemMetadata) map[string]*[]string {
 	m["keywords"] = &md.Keywords
 	m["language"] = &md.Languages
 	m["subject"] = &md.Subjects
+	m["title"] = &md.Titles
 	return m
 }
 
-func GetItem(id string, client *http.Client, cache *Cache, verbose bool) (*ItemTopLevelMetadata, error) {
+func GetItem(id string, loadedIDs map[string]struct{}, client *http.Client, cache *Cache, verbose bool) (*ItemTopLevelMetadata, error) {
 	if id == "" {
 		return nil, errors.New("id cannot be empty string")
 	}
@@ -111,13 +114,19 @@ func GetItem(id string, client *http.Client, cache *Cache, verbose bool) (*ItemT
 		return nil, errors.New("client cannot be nil")
 	}
 
+	// Alreaded loded in this session
+	if _, ok := loadedIDs[id]; ok {
+		log.Println("Already Loaded")
+		return nil, nil
+	}
+	loadedIDs[id] = struct{}{}
+
 	url := ItemBaseUrl + id
 
 	var item ItemTopLevelMetadata
 
 	err := getUrlJSON(client, url, 6, id, &item, "", cache, verbose)
 	if err != nil {
-		log.Println("ID=", id)
 		return nil, err
 	}
 
@@ -147,11 +156,20 @@ func fixItemStringFields(tm *ItemTopLevelMetadata) error {
 		{&tm.Segments, tm.Segments_Raw},
 	}
 
+	for i := 0; i < len(tm.Files); i++ {
+		sff := StringFields{
+			s:    &tm.Files[i].Original,
+			sRaw: tm.Files[i].Original_Raw,
+		}
+		sf = append(sf, sff)
+	}
+
 	err := fixStrings(sf)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+	fixSubjectField(&tm.Metadata)
 
 	return nil
 }
@@ -212,6 +230,17 @@ func fixKeywordField(md *ItemMetadata) {
 
 	for i := 0; i < len(md.Keywords); i++ {
 		md.Keywords[i] = strings.TrimSpace(md.Keywords[i])
+	}
+}
+
+func fixSubjectField(md *ItemMetadata) {
+
+	if len(md.Subjects) > 0 {
+		md.Subjects = strings.Split(md.Subjects[0], ";")
+	}
+
+	for i := 0; i < len(md.Subjects); i++ {
+		md.Subjects[i] = strings.TrimSpace(md.Subjects[i])
 	}
 
 	// var tmp []string

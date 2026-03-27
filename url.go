@@ -108,6 +108,10 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 		}
 	}
 
+	if len(body) <= 2 {
+		return errors.New("Error: Returns empty JSON: " + urlString)
+	}
+
 	dec := json.NewDecoder(bytes.NewBuffer(body))
 
 	err = dec.Decode(results)
