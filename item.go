@@ -86,6 +86,7 @@ type File struct {
 	Title        string      `json:"title"`
 	Original     []string    `json:"-"`
 	Original_Raw interface{} `json:"original"`
+	Length       string      `json:"length"`
 }
 
 type Role struct {
@@ -139,7 +140,7 @@ func GetItem(id string, loadedIDs map[string]struct{}, client *http.Client, cach
 }
 
 func fixItemStringFields(tm *ItemTopLevelMetadata) error {
-	fixKeywordField(&tm.Metadata)
+	splitKeywordField(&tm.Metadata)
 
 	sf := []StringFields{
 		{&tm.Metadata.Collections, tm.Metadata.Collection_Raw},
@@ -170,7 +171,7 @@ func fixItemStringFields(tm *ItemTopLevelMetadata) error {
 		log.Println(err)
 		return err
 	}
-	fixSubjectField(&tm.Metadata)
+	splitSubjectField(&tm.Metadata)
 
 	return nil
 }
@@ -240,7 +241,8 @@ func yearFromString(s string) int {
 	return 0
 }
 
-func fixKeywordField(md *ItemMetadata) {
+// Some keyword fields are string (with single string), []string, and string with multiple values separated by a comma ","
+func splitKeywordField(md *ItemMetadata) {
 	md.Keywords = strings.Split(md.Keywords_CommaSeparated, ",")
 
 	for i := 0; i < len(md.Keywords); i++ {
@@ -248,7 +250,8 @@ func fixKeywordField(md *ItemMetadata) {
 	}
 }
 
-func fixSubjectField(md *ItemMetadata) {
+// Some subject fields are string (with single string), []string, and string with multiple values separated by a semicolon ";"
+func splitSubjectField(md *ItemMetadata) {
 
 	if len(md.Subjects) > 0 {
 		md.Subjects = strings.Split(md.Subjects[0], ";")
@@ -257,12 +260,4 @@ func fixSubjectField(md *ItemMetadata) {
 	for i := 0; i < len(md.Subjects); i++ {
 		md.Subjects[i] = strings.TrimSpace(md.Subjects[i])
 	}
-
-	// var tmp []string
-	// for i := 0; i < len(md.Subjects); i++ {
-	// 	z := md.Subjects[i]
-	// 	md.Subjects[i] = strings.TrimSpace(md.Subjects[i])
-	// }
-	// md.Subjects = strings.Split(md.Subjects_CommaSeparated, ",")
-
 }
