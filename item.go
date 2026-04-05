@@ -70,11 +70,12 @@ type ItemMetadata struct {
 	Publishers              []string `json:"-"`
 	PublisherCatalogNumbers []string `json:"-"`
 	Scanners                []string `json:"-"`
+	Source                  string   `json:"source"`
 	Subjects                []string `json:"-"`
 	Titles                  []string `json:"-"`
 	Uploaders               []string `json:"-"`
 	Years                   []string `json:"-"`
-	CanonicalYear           string
+	CanonicalYear           int
 }
 
 type File struct {
@@ -141,7 +142,7 @@ func fixItemStringFields(tm *ItemTopLevelMetadata) error {
 	fixKeywordField(&tm.Metadata)
 
 	sf := []StringFields{
-		//{&tm.Metadata.Collection, tm.Metadata.Collection_Raw},
+		{&tm.Metadata.Collections, tm.Metadata.Collection_Raw},
 		{&tm.Metadata.collectionCatalogNumber, tm.Metadata.CollectionCatalogNumber_Raw},
 		{&tm.Metadata.Creators, tm.Metadata.Creator_Raw},
 		{&tm.Metadata.Dates, tm.Metadata.Date_Raw},
@@ -181,7 +182,7 @@ func isInt(s string) bool {
 	return false
 }
 
-func makeYear(years []string, dates []string) string {
+func makeYear(years []string, dates []string) int {
 	year := ""
 	date := ""
 	if len(years) > 0 {
@@ -194,7 +195,7 @@ func makeYear(years []string, dates []string) string {
 
 	if len(year) == 0 {
 		if len(date) == 0 {
-			return "????"
+			return 0
 		} else {
 			return yearFromString(date)
 		}
@@ -203,26 +204,40 @@ func makeYear(years []string, dates []string) string {
 
 }
 
-func yearFromString(s string) string {
+func yearFromString(s string) int {
 	// 1984
-
 	if len(s) == 4 && isInt(s) {
-		return s
+		v, err := strconv.Atoi(s)
+		if err != nil {
+			return 0
+		} else {
+			return v
+		}
 	}
 
 	// 1984-02
 	// 1984-02-09
 	if len(s) > 4 && isInt(s[0:4]) {
-		return s[0:4]
+		v, err := strconv.Atoi(s[0:4])
+		if err != nil {
+			return 0
+		} else {
+			return v
+		}
 	}
 
 	// 9/11/84
 	parts := strings.Split(s, "/")
 	if len(parts) == 3 {
-		return "19" + parts[2]
+		v, err := strconv.Atoi("19" + parts[2])
+		if err != nil {
+			return 0
+		} else {
+			return v
+		}
 	}
 
-	return "????-"
+	return 0
 }
 
 func fixKeywordField(md *ItemMetadata) {
