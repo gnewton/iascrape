@@ -87,6 +87,7 @@ type File struct {
 	Original     []string    `json:"-"`
 	Original_Raw interface{} `json:"original"`
 	Length       string      `json:"length"`
+	TrackOrder   int         `json:"-"` // This is not part of the JSON
 }
 
 type Role struct {
