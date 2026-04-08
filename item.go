@@ -42,6 +42,7 @@ type ItemMetadata_Raw struct {
 	PublisherCatalogNumber_Raw  interface{} `json:"publisher-catalog-number"`
 	Publisher_Raw               interface{} `json:"publisher"`
 	Scanner_Raw                 interface{} `json:"scanner"`
+	Source_Raw                 interface{} `json:"source"`
 	Subject_Raw                 interface{} `json:"subject"`
 	Title_Raw                   interface{} `json:"title"`
 	Uploader_Raw                interface{} `json:"uploader"`
@@ -70,7 +71,7 @@ type ItemMetadata struct {
 	Publishers              []string `json:"-"`
 	PublisherCatalogNumbers []string `json:"-"`
 	Scanners                []string `json:"-"`
-	Source                  string   `json:"source"`
+	Source                  []string   `json:"-"`
 	Subjects                []string `json:"-"`
 	Titles                  []string `json:"-"`
 	Uploaders               []string `json:"-"`
@@ -144,6 +145,7 @@ func fixItemStringFields(tm *ItemTopLevelMetadata) error {
 	splitKeywordField(&tm.Metadata)
 
 	sf := []StringFields{
+		{&tm.Metadata.Source, tm.Metadata.Source_Raw},
 		{&tm.Metadata.Collections, tm.Metadata.Collection_Raw},
 		{&tm.Metadata.collectionCatalogNumber, tm.Metadata.CollectionCatalogNumber_Raw},
 		{&tm.Metadata.Creators, tm.Metadata.Creator_Raw},

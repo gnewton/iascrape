@@ -69,9 +69,9 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 		return errors.New("URL is empty string")
 	}
 
-	if verbose {
-		log.Println("getUrlJSON: Getting URL", urlString)
-	}
+	//if verbose {
+	//log.Println("getUrlJSON: Getting URL", urlString)
+	//}
 
 	_, err := url.Parse(urlString)
 	if err != nil {
@@ -93,13 +93,13 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 			return err
 		}
 		if verbose && body != nil {
-			log.Println("Cache hit")
+			//log.Println("Cache hit")
 		}
 	}
 
 	if body == nil {
 		body, err = getUrl(client, urlString, retry, time.Second*5)
-
+		//log.Println("Cache miss", urlString)
 		if err != nil {
 			return err
 		}
@@ -116,6 +116,7 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 
 	err = dec.Decode(results)
 	if err != nil {
+		log.Println("Error in URL:", urlString)
 		log.Println(string(body))
 	}
 	return err
