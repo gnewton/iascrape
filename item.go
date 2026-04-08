@@ -12,6 +12,9 @@ import (
 // var ItemBaseUrl = "https://archive.org/metadata/"
 var ItemBaseUrl = "http://archive.org/metadata/"
 
+var IASCRAPE_DEBUG = false
+var IASCRAPE_DEGUG_DEPTH = 0
+
 type ItemTopLevelMetadata struct {
 	Created          int64        `json:"created"`
 	D1               string       `json:"d1"`
@@ -42,7 +45,7 @@ type ItemMetadata_Raw struct {
 	PublisherCatalogNumber_Raw  interface{} `json:"publisher-catalog-number"`
 	Publisher_Raw               interface{} `json:"publisher"`
 	Scanner_Raw                 interface{} `json:"scanner"`
-	Source_Raw                 interface{} `json:"source"`
+	Source_Raw                  interface{} `json:"source"`
 	Subject_Raw                 interface{} `json:"subject"`
 	Title_Raw                   interface{} `json:"title"`
 	Uploader_Raw                interface{} `json:"uploader"`
@@ -71,7 +74,7 @@ type ItemMetadata struct {
 	Publishers              []string `json:"-"`
 	PublisherCatalogNumbers []string `json:"-"`
 	Scanners                []string `json:"-"`
-	Source                  []string   `json:"-"`
+	Source                  []string `json:"-"`
 	Subjects                []string `json:"-"`
 	Titles                  []string `json:"-"`
 	Uploaders               []string `json:"-"`
@@ -104,6 +107,7 @@ func MakeMetadataItemFieldMap(md *ItemMetadata) map[string]*[]string {
 	m["genre"] = &md.Genres
 	m["keywords"] = &md.Keywords
 	m["language"] = &md.Languages
+	m["collection"] = &md.Collections
 	m["subject"] = &md.Subjects
 	m["title"] = &md.Titles
 	return m
@@ -120,7 +124,6 @@ func GetItem(id string, loadedIDs map[string]struct{}, client *http.Client, cach
 
 	// Alreaded loded in this session
 	if _, ok := loadedIDs[id]; ok {
-		log.Println("Already Loaded")
 		return nil, nil
 	}
 	loadedIDs[id] = struct{}{}
