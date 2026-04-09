@@ -109,7 +109,7 @@ func (s *Search) Total() (int64, error) {
 	var results searchItems
 	var err error
 
-	err = getUrlJSON(s.Client, url, 5, "", &results, s.cursor, nil, s.Verbose)
+	err,_ = getUrlJSON(s.Client, url, 5, "", &results, s.cursor, nil, s.Verbose)
 	if err != nil {
 		log.Println("Error on url", url)
 		return 0, err
@@ -148,7 +148,7 @@ func (s *Search) Execute() ([]SearchItem, error) {
 		log.Println("search.Executer: Query URL", url)
 	}
 
-	err := getUrlJSON(s.Client, url, 6, "", &tmpItems, s.cursor, nil, s.Verbose)
+	err,_ := getUrlJSON(s.Client, url, 6, "", &tmpItems, s.cursor, nil, s.Verbose)
 	if err != nil {
 		return nil, err
 	}

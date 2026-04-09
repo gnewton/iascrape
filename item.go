@@ -129,9 +129,26 @@ func GetItem(id string, loadedIDs map[string]struct{}, client *http.Client, cach
 
 	var item ItemTopLevelMetadata
 
-	err := getUrlJSON(client, url, 6, id, &item, "", cache, verbose)
+	err, cacheHit := getUrlJSON(client, url, 6, id, &item, "", cache, verbose)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(item.Metadata.Identifier) == 0{
+		log.Println("#####$$$$$$$ Cache:", cacheHit)
+		log.Println("Missing identifier", url)
+		// Force not use cache
+		err, cacheHit := getUrlJSON(client, url, 6, id, &item, "", nil, verbose)
+		if err != nil {
+			return nil, err
+		}
+		if len(item.Metadata.Identifier) == 0{
+			log.Println("22 #####$$$$$$$ Cache:", cacheHit)
+			log.Println("22 Missing identifier", url)
+		}else{
+			log.Println("OK", item.Metadata.Identifier)
+		}
+		
 	}
 
 	fixItemStringFields(&item)

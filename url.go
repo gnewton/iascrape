@@ -64,9 +64,9 @@ func NewClient() *http.Client {
 	}
 }
 
-func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey string, results interface{}, cursor string, cache *Cache, verbose bool) error {
+func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey string, results interface{}, cursor string, cache *Cache, verbose bool) (error, bool) {
 	if urlString == "" {
-		return errors.New("URL is empty string")
+		return errors.New("URL is empty string"), false
 	}
 
 	//if verbose {
@@ -75,7 +75,7 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 
 	_, err := url.Parse(urlString)
 	if err != nil {
-		return err
+		return err, false
 	}
 
 	var key string
@@ -86,14 +86,20 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 		key = alternateKey
 	}
 
+	cacheHit := false
 	var body []byte
 	if cache != nil {
+
+
 		body, err = cache.GetKey(key)
 		if err != nil {
-			return err
+			return err, false
 		}
 		if verbose && body != nil {
 			//log.Println("Cache hit")
+		}
+		if body != nil{
+			cacheHit = true
 		}
 	}
 
@@ -101,7 +107,7 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 		body, err = getUrl(client, urlString, retry, time.Second*5)
 		//log.Println("Cache miss", urlString)
 		if err != nil {
-			return err
+			return err, false
 		}
 		if cache != nil {
 			cache.AddToCache(key, body)
@@ -109,7 +115,7 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 	}
 
 	if len(body) <= 2 {
-		return errors.New("Error: Returns empty JSON: " + urlString)
+		return errors.New("Error: Returns empty JSON: " + urlString), false
 	}
 
 	dec := json.NewDecoder(bytes.NewBuffer(body))
@@ -119,7 +125,9 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 		log.Println("Error in URL:", urlString)
 		log.Println(string(body))
 	}
-	return err
+
+	
+	return err, cacheHit
 }
 
 func getUrl(client *http.Client, u string, retry int, delay time.Duration) ([]byte, error) {
