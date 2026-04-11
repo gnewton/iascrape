@@ -113,7 +113,7 @@ func MakeMetadataItemFieldMap(md *ItemMetadata) map[string]*[]string {
 	return m
 }
 
-func GetItem(id string, loadedIDs map[string]struct{}, client *http.Client, cache *Cache, verbose bool) (*ItemTopLevelMetadata, error) {
+func GetItem(id string, client *http.Client, cache *Cache, verbose bool) (*ItemTopLevelMetadata, error) {
 	if id == "" {
 		return nil, errors.New("id cannot be empty string")
 	}
@@ -121,12 +121,6 @@ func GetItem(id string, loadedIDs map[string]struct{}, client *http.Client, cach
 	if client == nil {
 		return nil, errors.New("client cannot be nil")
 	}
-
-	// Alreaded loded in this session
-	if _, ok := loadedIDs[id]; ok {
-		return nil, nil
-	}
-	loadedIDs[id] = struct{}{}
 
 	url := ItemBaseUrl + id
 
@@ -137,7 +131,7 @@ func GetItem(id string, loadedIDs map[string]struct{}, client *http.Client, cach
 		return nil, err
 	}
 
-	if len(item.Metadata.Identifier) == 0{
+	if len(item.Metadata.Identifier) == 0 {
 		log.Println("#####$$$$$$$ Cache:", cacheHit)
 		log.Println("Missing identifier", url)
 		// Force not use cache
@@ -145,13 +139,13 @@ func GetItem(id string, loadedIDs map[string]struct{}, client *http.Client, cach
 		if err != nil {
 			return nil, err
 		}
-		if len(item.Metadata.Identifier) == 0{
+		if len(item.Metadata.Identifier) == 0 {
 			log.Println("22 #####$$$$$$$ Cache:", cacheHit)
 			log.Println("22 Missing identifier", url)
-		}else{
+		} else {
 			log.Println("OK", item.Metadata.Identifier)
 		}
-		
+
 	}
 
 	fixItemStringFields(&item)
@@ -259,6 +253,10 @@ func yearFromString(s string) int {
 		} else {
 			return v
 		}
+	}
+
+	if len(s) == 5 && s[0] == '~' {
+		return yearFromString(s[1:])
 	}
 
 	return 0
