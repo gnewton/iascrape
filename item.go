@@ -132,6 +132,7 @@ func GetItem(id string, client *http.Client, cache *Cache, verbose bool) (*ItemT
 	}
 
 	if len(item.Metadata.Identifier) == 0 {
+		log.Println("#####$$$$$$$ URL:", url)
 		log.Println("#####$$$$$$$ Cache:", cacheHit)
 		log.Println("Missing identifier", url)
 		// Force not use cache
