@@ -40,7 +40,7 @@ func NewCache(dbFileName string) (*Cache, error) {
 
 }
 
-func (c *Cache) GetKey(url string) ([]byte, error) {
+func (c *Cache) Get(url string) ([]byte, error) {
 	var v []byte
 
 	if err := c.db.View(func(tx *bolt.Tx) error {
@@ -62,7 +62,16 @@ func (c *Cache) GetKey(url string) ([]byte, error) {
 	return nil, nil
 }
 
-func (c *Cache) AddToCache(url string, body []byte) error {
+// func (c *Cache) Delete(key string) error {
+// 	c.db.Update(func (tx *bolt.Tx) error {
+// 		b := tx.Bucket([]byte(DBBucketName))
+// 		err := b.Delete([]byte(key))
+// 		return err
+// 	})
+// }
+	
+
+func (c *Cache) Put(url string, body []byte) error {
 
 	return c.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(DBBucketName))

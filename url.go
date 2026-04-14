@@ -89,14 +89,12 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 	cacheHit := false
 	var body []byte
 	if cache != nil {
-
-
-		body, err = cache.GetKey(key)
+		body, err = cache.Get(key)
 		if err != nil {
 			return err, false
 		}
 		if verbose && body != nil {
-			//log.Println("Cache hit")
+			log.Println("Cache hit")
 		}
 		if body != nil{
 			cacheHit = true
@@ -110,11 +108,12 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 			return err, false
 		}
 		if cache != nil {
-			cache.AddToCache(key, body)
+			cache.Put(key, body)
 		}
 	}
 
 	if len(body) <= 2 {
+		log.Println(string(body))
 		return errors.New("Error: Returns empty JSON: " + urlString), false
 	}
 
