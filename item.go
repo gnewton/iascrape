@@ -102,7 +102,6 @@ type Role struct {
 func MakeMetadataItemFieldMap(md *ItemMetadata) map[string]*[]string {
 	m := make(map[string]*[]string)
 
-	//m["collection"] = &md.Collection
 	m["creator"] = &md.Creators
 	m["genre"] = &md.Genres
 	m["keywords"] = &md.Keywords
@@ -131,11 +130,18 @@ func GetItem(id string, client *http.Client, cache *Cache, verbose bool) (*ItemT
 		return nil, err
 	}
 
+	// Delete, then re-get with cache turned off
 	if len(item.Metadata.Identifier) == 0 {
 		log.Println("#####$$$$$$$ URL:", url)
 		log.Println("#####$$$$$$$ Cache:", cacheHit)
 		log.Println("Missing identifier", url)
-		// Force not use cache
+
+		err = cache.Delete(id)
+		if err != nil {
+			log.Println("Error deleting from cache id=", id)
+			return nil, err
+		}
+		// Force to not use cache (nil cache)
 		err, cacheHit := getUrlJSON(client, url, 6, id, &item, "", nil, verbose)
 		if err != nil {
 			return nil, err
@@ -143,6 +149,7 @@ func GetItem(id string, client *http.Client, cache *Cache, verbose bool) (*ItemT
 		if len(item.Metadata.Identifier) == 0 {
 			log.Println("22 #####$$$$$$$ Cache:", cacheHit)
 			log.Println("22 Missing identifier", url)
+			return nil, errors.New("Identifier nil after second non-cache retrieval! ID=" + id + "      URL=" + url)
 		} else {
 			log.Println("OK", item.Metadata.Identifier)
 		}
