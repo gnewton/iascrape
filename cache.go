@@ -62,14 +62,15 @@ func (c *Cache) Get(url string) ([]byte, error) {
 	return nil, nil
 }
 
-// func (c *Cache) Delete(key string) error {
-// 	c.db.Update(func (tx *bolt.Tx) error {
-// 		b := tx.Bucket([]byte(DBBucketName))
-// 		err := b.Delete([]byte(key))
-// 		return err
-// 	})
-// }
-	
+func (c *Cache) Delete(key string) error {
+	var err error
+	c.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(DBBucketName))
+		err = b.Delete([]byte(key))
+		return err
+	})
+	return err
+}
 
 func (c *Cache) Put(url string, body []byte) error {
 
