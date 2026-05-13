@@ -19,6 +19,9 @@ var max time.Duration = 0
 var n int64 = 0
 var total time.Duration = 0
 
+var cacheHits int64 = 0
+var cacheMisses int64 = 0
+
 var backOff time.Duration = 3 * time.Second
 
 type RequestStats struct {
@@ -96,8 +99,11 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 		if verbose && body != nil {
 			log.Println("Cache hit")
 		}
-		if body != nil{
+		if body != nil {
 			cacheHit = true
+			cacheHits += 1
+		} else {
+			cacheMisses += 1
 		}
 	}
 
@@ -125,8 +131,11 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 		log.Println(string(body))
 	}
 
-	
 	return err, cacheHit
+}
+
+func cacheStats() (int64, int64) {
+	return cacheHits, cacheMisses
 }
 
 func getUrl(client *http.Client, u string, retry int, delay time.Duration) ([]byte, error) {
