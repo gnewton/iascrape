@@ -134,7 +134,7 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 	return err, cacheHit
 }
 
-func cacheStats() (int64, int64) {
+func CacheStats() (int64, int64) {
 	return cacheHits, cacheMisses
 }
 
