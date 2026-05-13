@@ -1,3 +1,5 @@
+[![Go Reference](https://pkg.go.dev/badge/github.com/gnewton/iascrape.svg)](https://pkg.go.dev/github.com/gnewton/iascrape)
+
 # iascrape
 Library to used to search and scrape the Internet Archive
 
