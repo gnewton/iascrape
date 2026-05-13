@@ -85,7 +85,7 @@ type SearchItem struct {
 }
 
 type Search struct {
-	ChunkSize    int
+	ChunkSize    int // Must be >100 <5000, as per Internet Archive description https://archive.org/help/aboutsearch.htm
 	Client       *http.Client
 	Limit        int64
 	MaxResults   int64
@@ -109,7 +109,7 @@ func (s *Search) Total() (int64, error) {
 	var results searchItems
 	var err error
 
-	err,_ = getUrlJSON(s.Client, url, 5, "", &results, s.cursor, nil, s.Verbose)
+	err, _ = getUrlJSON(s.Client, url, 5, "", &results, s.cursor, nil, s.Verbose)
 	if err != nil {
 		log.Println("Error on url", url)
 		return 0, err
@@ -148,7 +148,7 @@ func (s *Search) Execute() ([]SearchItem, error) {
 		log.Println("search.Executer: Query URL", url)
 	}
 
-	err,_ := getUrlJSON(s.Client, url, 6, "", &tmpItems, s.cursor, nil, s.Verbose)
+	err, _ := getUrlJSON(s.Client, url, 6, "", &tmpItems, s.cursor, nil, s.Verbose)
 	if err != nil {
 		return nil, err
 	}

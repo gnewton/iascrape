@@ -15,12 +15,17 @@ import (
 
 var DBBucketName = "ia"
 
+// Cache stores the bbolt KV store information needed for the cache.
+// It uses a single bucket to store all cache values
+
 type Cache struct {
 	db           *bolt.DB
 	filename     string
 	DBBucketName string
 }
 
+// NewCache opens an existing or creates a new boltdb at dbFileName.
+// Returns a pointer to a Cache struct.
 func NewCache(dbFileName string) (*Cache, error) {
 	c := new(Cache)
 	var err error
@@ -40,6 +45,9 @@ func NewCache(dbFileName string) (*Cache, error) {
 
 }
 
+// Get uses the key argument to pull out an item from the cache (kv store)
+// If successful, returns []byte, nil
+// If unsuccessful, returns nil, nil
 func (c *Cache) Get(url string) ([]byte, error) {
 	var v []byte
 

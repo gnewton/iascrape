@@ -9,13 +9,21 @@ import (
 	//"time"
 )
 
-// var ItemBaseUrl = "https://archive.org/metadata/"
+// ItemBaseUrl is the base url for the archive.org metadata
 var ItemBaseUrl = "http://archive.org/metadata/"
 
 var IASCRAPE_DEBUG = false
 var IASCRAPE_DEGUG_DEPTH = 0
 
+type ItemTopLevelMetadata_Raw struct {
+	Segments_Raw interface{} `json:"segments"`
+}
+
+// ItemTopLevelMetadata represents the metadata for an item returned by the Internet Archive.
+// Example: https://archive.org/metadata/lp_highland-pageantry_the-regimental-band-and-pipes-and-drums-of
+
 type ItemTopLevelMetadata struct {
+	ItemTopLevelMetadata_Raw
 	Created          int64        `json:"created"`
 	D1               string       `json:"d1"`
 	Date             string       `json:"date"`
@@ -27,7 +35,6 @@ type ItemTopLevelMetadata struct {
 	Metadata         ItemMetadata `json:"metadata"`
 	Roles            Role         `json:"roles"`
 	Segments         []string     `json:"-"`
-	Segments_Raw     interface{}  `json:"segments"`
 	Server           string       `json:"server"`
 	Workable_Servers []string     `json:"workable_servers"`
 	Uniq             int64        `json:"uniq"`
@@ -99,6 +106,10 @@ type Role struct {
 	Performers    []string
 }
 
+// MakeMetadataItemFieldMap takes an item and makes a map of a subset of its fields:
+// Creators, Genres, Keywords, Languages, Collections, Subjects, Titles
+// and maps these to strings.
+// Can be used to filter out or filter out items
 func MakeMetadataItemFieldMap(md *ItemMetadata) map[string]*[]string {
 	m := make(map[string]*[]string)
 
@@ -112,6 +123,7 @@ func MakeMetadataItemFieldMap(md *ItemMetadata) map[string]*[]string {
 	return m
 }
 
+// GetItem takes in an archive.org item ID and returns *ItemTopLevelMetadata representation of the item
 func GetItem(id string, client *http.Client, cache *Cache, verbose bool) (*ItemTopLevelMetadata, error) {
 	if id == "" {
 		return nil, errors.New("id cannot be empty string")
