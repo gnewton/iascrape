@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/url"
+	"strings"
 	//"net"
 	//"context"
 	"net/http"
@@ -68,13 +69,13 @@ func NewClient() *http.Client {
 }
 
 func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey string, results interface{}, cursor string, cache *Cache, verbose bool) (error, bool) {
-	if urlString == "" {
-		return errors.New("URL is empty string"), false
+	if client == nil {
+		return errors.New("client *http.Client is nil"), false
 	}
 
-	//if verbose {
-	//log.Println("getUrlJSON: Getting URL", urlString)
-	//}
+	if hasHttpPrefix(urlString) {
+		return errors.New("URL invalid: does not start with http:// or https://"), false
+	}
 
 	_, err := url.Parse(urlString)
 	if err != nil {
@@ -138,9 +139,24 @@ func CacheStats() (int64, int64) {
 	return cacheHits, cacheMisses
 }
 
+func hasHttpPrefix(u string) bool {
+	return !strings.HasPrefix(u, "http://") && !strings.HasPrefix(u, "https://")
+}
+
 func getUrl(client *http.Client, u string, retry int, delay time.Duration) ([]byte, error) {
+	if client == nil {
+		return nil, errors.New("client *http.Client is nil")
+	}
+	if hasHttpPrefix(u) {
+		return nil, errors.New("URL invalid: does not start with http:// or https://")
+	}
 
 	var err error
+
+	_, err = url.Parse(u)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest(http.MethodGet, u, nil)
 	if err != nil {
