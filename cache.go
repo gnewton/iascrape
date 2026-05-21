@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	//"errors"
+	"errors"
 	"fmt"
 	bolt "go.etcd.io/bbolt"
 	"io"
 	"io/ioutil"
+	//"strings"
 	//"log"
 	//"os"
 	//"time"
@@ -48,12 +50,17 @@ func NewCache(dbFileName string) (*Cache, error) {
 // Get uses the key argument to pull out an item from the cache (kv store)
 // If successful, returns []byte, nil
 // If unsuccessful, returns nil, nil
-func (c *Cache) Get(url string) ([]byte, error) {
+func (c *Cache) Get(key string) ([]byte, error) {
+	if key == "" {
+		return nil, errors.New("Empty URL string")
+	}
+	//
+
 	var v []byte
 
 	if err := c.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(DBBucketName))
-		v = b.Get([]byte(url))
+		v = b.Get([]byte(key))
 		return nil
 	}); err != nil {
 		return nil, err
@@ -61,7 +68,7 @@ func (c *Cache) Get(url string) ([]byte, error) {
 
 	if v != nil {
 		var buf bytes.Buffer
-		err := gunzipper2(&buf, v)
+		err := gunzipper(&buf, v)
 		if err != nil {
 			return nil, err
 		}
@@ -71,6 +78,11 @@ func (c *Cache) Get(url string) ([]byte, error) {
 }
 
 func (c *Cache) Delete(key string) error {
+	if key == "" {
+		return errors.New("Empty URL string")
+	}
+	//
+
 	var err error
 	c.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(DBBucketName))
@@ -80,7 +92,14 @@ func (c *Cache) Delete(key string) error {
 	return err
 }
 
-func (c *Cache) Put(url string, body []byte) error {
+func (c *Cache) Put(key string, body []byte) error {
+	if key == "" {
+		return errors.New("Empty URL string")
+	}
+
+	if len(body) == 0 {
+		return errors.New("Empty value []byte")
+	}
 
 	return c.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(DBBucketName))
@@ -88,11 +107,22 @@ func (c *Cache) Put(url string, body []byte) error {
 		var gzbuf bytes.Buffer
 		gzipper(&gzbuf, []byte(body))
 
-		return b.Put([]byte(url), gzbuf.Bytes())
+		return b.Put([]byte(key), gzbuf.Bytes())
 	})
 }
 
 func gzipper(w io.Writer, data []byte) error {
+	if w == nil {
+		return errors.New("io.Writer is nil")
+	}
+	if data == nil {
+		return errors.New("[]byte is nil")
+	}
+	if len(data) == 0 {
+		return errors.New("[]bytes is zero length")
+	}
+	//
+
 	gw := gzip.NewWriter(w)
 	defer gw.Close()
 
@@ -103,15 +133,14 @@ func gzipper(w io.Writer, data []byte) error {
 	return nil
 }
 
-func gunzipper(data []byte) error {
-	gr, err := gzip.NewReader(bytes.NewBuffer(data))
-	defer gr.Close()
+func gunzipper(w io.Writer, data []byte) error {
+	if w == nil {
+		return errors.New("io.Writer is nil")
+	}
+	if data == nil {
+		return errors.New("[]byte is nil")
+	}
 
-	data, err = ioutil.ReadAll(gr)
-	return err
-}
-
-func gunzipper2(w io.Writer, data []byte) error {
 	gr, err := gzip.NewReader(bytes.NewBuffer(data))
 	defer gr.Close()
 
