@@ -2,7 +2,6 @@ package iascrape
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"testing"
 )
@@ -12,8 +11,6 @@ func Test_NewCache_EmptyStringFileArg(t *testing.T) {
 
 	if err == nil {
 		t.Error(err)
-	} else {
-		log.Println(err)
 	}
 }
 
@@ -22,8 +19,6 @@ func Test_NewCache_NoPermissionsFileLocation(t *testing.T) {
 
 	if err == nil {
 		t.Error(err)
-	} else {
-		log.Println(err)
 	}
 }
 
@@ -32,8 +27,6 @@ func Test_NewCache_FileLocationIsDirectory(t *testing.T) {
 
 	if err == nil {
 		t.Error(err)
-	} else {
-		log.Println(err)
 	}
 }
 
