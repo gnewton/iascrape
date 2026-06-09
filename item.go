@@ -161,7 +161,8 @@ func GetItem(id string, client *http.Client, cache *Cache, verbose bool) (*ItemT
 		if len(item.Metadata.Identifier) == 0 {
 			log.Println("22 #####$$$$$$$ Cache:", cacheHit)
 			log.Println("22 Missing identifier", url)
-			return nil, errors.New("Identifier nil after second non-cache retrieval! ID=" + id + "      URL=" + url)
+			log.Println("Identifier nil after second non-cache retrieval! ID=" + id + "      URL=" + url)
+			return nil, nil
 		} else {
 			log.Println("OK", item.Metadata.Identifier)
 		}
