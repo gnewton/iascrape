@@ -12,10 +12,11 @@ import (
 	//"net"
 	//"context"
 	"net/http"
+	"runtime"
 	"time"
 )
 
-const UserAgent = "iascrape; github.com/gnewton/iascrape"
+const UserAgent = runtime.GOOS + "; iascrape; github.com/gnewton/iascrape"
 
 var min time.Duration = 99999999999999
 var max time.Duration = 0
