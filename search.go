@@ -106,6 +106,10 @@ func (s *Search) Total() (int64, error) {
 
 	url := IA_ScrapeBaseURL + s.Query + "&total_only=true"
 
+	if s.Verbose {
+		log.Println("search.Total(): url=", url)
+	}
+
 	var results searchItems
 	var err error
 

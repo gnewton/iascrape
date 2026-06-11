@@ -15,6 +15,8 @@ import (
 	"time"
 )
 
+const UserAgent = "iascrape; github.com/gnewton/iascrape"
+
 var min time.Duration = 99999999999999
 var max time.Duration = 0
 var n int64 = 0
@@ -163,6 +165,8 @@ func getUrl(client *http.Client, u string, retry int, delay time.Duration) ([]by
 		log.Printf("Error: Client fail: %s\n", err)
 		return nil, err
 	}
+
+	req.Header.Set("User-Agent", UserAgent)
 
 	res, err := client.Do(req)
 
