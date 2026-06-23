@@ -40,6 +40,21 @@ type ItemTopLevelMetadata struct {
 	Uniq             int64        `json:"uniq"`
 }
 
+// type Segment struct {
+// 	Tracks            []Track
+// 	TargetDir         string
+// 	SegmenterVersion  string
+// 	ArchiverLPVersion string
+// 	File              string
+// }
+
+type Track struct {
+	//FileMD      File_MD     `json:"file_md"`
+	//Segments    Segments    `json:"segments"`
+	//FileTags    File_Tags   `json:"file_tags"`
+	//TrackNumber TrackNumber `json:"TRACKNUMBER"`
+}
+
 type ItemMetadata_Raw struct {
 	CollectionCatalogNumber_Raw interface{} `json:"collection-catalog-number"`
 	Collection_Raw              interface{} `json:"collection"`
