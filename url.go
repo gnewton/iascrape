@@ -127,11 +127,17 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 		return errors.New("Error: Returns empty JSON: " + urlString), false
 	}
 
+	// This is a hack. IA does not set the 	Header "content-type"
+	if body[0] != '{' {
+		log.Println("Content is not JSON", urlString)
+		log.Fatal(string(body))
+	}
+
 	dec := json.NewDecoder(bytes.NewBuffer(body))
 
 	err = dec.Decode(results)
 	if err != nil {
-		log.Println("Error in URL:", urlString)
+		log.Println("Error decoding JSON for URL:", urlString)
 		log.Println(string(body))
 	}
 
@@ -198,7 +204,27 @@ func getUrl(client *http.Client, u string, retry int, delay time.Duration) ([]by
 		log.Println(err)
 		return nil, err
 	}
+	log.Println("Header.content-type", res.Header["Content-Type"])
+
+	if !headerContains(res.Header["Content-Type"], "application/json") {
+		return nil, errors.New("Error: Content is not json")
+	}
+	// for k, v := range res.Header {
+	// 	log.Println(k, ":", v)
+	// }
 	return io.ReadAll(res.Body)
+}
+
+func headerContains(header []string, s string) bool {
+	if header == nil {
+		return true
+	}
+	for i := 0; i < len(header); i++ {
+		if header[i] == s {
+			return true
+		}
+	}
+	return false
 }
 
 func HeadUrl(client *http.Client, u string, retry int, delay time.Duration) error {
