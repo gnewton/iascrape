@@ -101,7 +101,7 @@ func getUrlJSON(client *http.Client, urlString string, retry int, alternateKey s
 			return err, false
 		}
 		if verbose && body != nil {
-			log.Println("Cache hit")
+			//log.Println("Cache hit")
 		}
 		if body != nil {
 			cacheHit = true
@@ -204,23 +204,26 @@ func getUrl(client *http.Client, u string, retry int, delay time.Duration) ([]by
 		log.Println(err)
 		return nil, err
 	}
-	log.Println("Header.content-type", res.Header["Content-Type"])
 
-	if !headerContains(res.Header["Content-Type"], "application/json") {
-		return nil, errors.New("Error: Content is not json")
-	}
+	 if !headerContains(res.Header["Content-Type"], "application/json") {
+	 	return nil, errors.New("Error: Content is not json")
+	 }
 	// for k, v := range res.Header {
 	// 	log.Println(k, ":", v)
 	// }
 	return io.ReadAll(res.Body)
 }
 
+// Need to support both:
+// Content-Type:[application/json; charset=UTF-8]
+// Content-Type:[application/json]
 func headerContains(header []string, s string) bool {
 	if header == nil {
 		return true
 	}
 	for i := 0; i < len(header); i++ {
-		if header[i] == s {
+		//if header[i] ==s {
+		if strings.HasPrefix(header[i],s) {
 			return true
 		}
 	}
